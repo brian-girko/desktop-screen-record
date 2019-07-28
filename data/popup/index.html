@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+<body>
+  <table>
+    <tr>
+      <th colspan="2">Video Source</th>
+    </tr>
+    <tr>
+      <td><input type="radio" name="video" id="screen" checked="true"></td>
+      <td><label for="screen">Entire Screen</label></td>
+    </tr>
+    <tr>
+      <td><input type="radio" name="video" id="window"></td>
+      <td><label for="window">Application Window</label></td>
+    </tr>
+    <tr>
+      <td><input type="radio" name="video" id="tab"></td>
+      <td><label for="tab">Browser Tab</label></td>
+    </tr>
+    <tr>
+      <th colspan="2">Audio Source</th>
+    </tr>
+    <tr>
+      <td><input type="radio" name="audio" id="system"></td>
+      <td><label for="system">System</label></td>
+    </tr>
+    <tr>
+      <td><input type="radio" name="audio" id="mic"></td>
+      <td><label for="mic">Microphone</label></td>
+    </tr>
+    <tr>
+      <td><input type="radio" name="audio" id="silent" checked="true"></td>
+      <td><label for="silent">No Audio</label></td>
+    </tr>
+  </table>
+  <div id="record">Start Recording</div>
+  <script type="text/javascript" src="index.js"></script>
+</body>
+</html>
