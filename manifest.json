@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "0.1.0",
+  "version": "0.1.2",
   "name": "Desktop Screen Record",
   "description": "Record the computer's screen, entire application or a single browser tab with audio support",
   "permissions": [
@@ -9,6 +9,7 @@
     "notifications",
     "downloads"
   ],
+  "homepage_url": "https://add0n.com/screen-record.html",
   "icons": {
     "16": "data/icons/16.png",
     "19": "data/icons/19.png",
@@ -34,6 +35,7 @@
   "background": {
     "peristant": false,
     "scripts": [
+      "file.js",
       "background.js"
     ]
   }
