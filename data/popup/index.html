@@ -25,7 +25,7 @@
     </tr>
     <tr>
       <td><input type="radio" name="audio" id="system"></td>
-      <td><label for="system">System</label></td>
+      <td><label for="system">System (Speaker)</label></td>
     </tr>
     <tr>
       <td><input type="radio" name="audio" id="mic"></td>
@@ -35,8 +35,15 @@
       <td><input type="radio" name="audio" id="silent" checked="true"></td>
       <td><label for="silent">No Audio</label></td>
     </tr>
+    <tr title="When recording a tab, audio is muted. Use this option to unmute (this might cause audio recording problems)">
+      <td style="padding-top: 20px;"><input type="checkbox" id="play" name="play"></td>
+      <td style="padding-top: 20px;"><label for="play">Try to Stream Audio</label></td>
+    </tr>
   </table>
-  <div id="record">Start Recording</div>
+  <div id="tools">
+    <span id="draw">Draw</span>
+    <span id="record">Record</span>
+  </div>
   <script type="text/javascript" src="index.js"></script>
 </body>
 </html>

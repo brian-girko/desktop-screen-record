@@ -1,4 +1,3 @@
-/* global File */
 'use strict';
 
 const notify = e => chrome.notifications.create({
@@ -16,7 +15,7 @@ const button = {
     chrome.browserAction.setPopup({
       popup: 'data/popup/index.html'
     });
-    chrome.browserAction.setIcon({
+    window.setTimeout(() => chrome.browserAction.setIcon({
       path: {
         '16': 'data/icons/16.png',
         '19': 'data/icons/19.png',
@@ -24,7 +23,7 @@ const button = {
         '38': 'data/icons/38.png',
         '48': 'data/icons/48.png'
       }
-    });
+    }), 600);
   },
   recording() {
     chrome.browserAction.setPopup({popup: ''});
@@ -34,21 +33,21 @@ const button = {
     const mode = index % 2 ? 'active/' : '';
     chrome.browserAction.setIcon({
       path: {
-        '16': 'data/icons/' + (mode) + '16.png',
-        '19': 'data/icons/' + (mode) + '19.png',
-        '32': 'data/icons/' + (mode) + '32.png',
-        '38': 'data/icons/' + (mode) + '38.png',
-        '48': 'data/icons/' + (mode) + '48.png'
+        '16': 'data/icons/' + mode + '16.png',
+        '19': 'data/icons/' + mode + '19.png',
+        '32': 'data/icons/' + mode + '32.png',
+        '38': 'data/icons/' + mode + '38.png',
+        '48': 'data/icons/' + mode + '48.png'
       }
     }, () => {
-      window.clearTimeout(button.id);
-      button.id = window.setTimeout(button.alter, 500, index + 1);
+      clearTimeout(button.id);
+      button.id = setTimeout(button.alter, 500, index + 1);
     });
   }
 };
 chrome.browserAction.onClicked.addListener(button.click);
 
-chrome.runtime.onMessage.addListener(async request => {
+const onMessage = async request => {
   if (request.method === 'record') {
     try {
       if (request.audio === 'mic') {
@@ -69,6 +68,7 @@ chrome.runtime.onMessage.addListener(async request => {
       if (request.audio === 'system') {
         type.push('audio');
       }
+
       chrome.desktopCapture.chooseDesktopMedia(type, async streamId => {
         try {
           const constraints = {
@@ -87,8 +87,8 @@ chrome.runtime.onMessage.addListener(async request => {
               }
             };
           }
-
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
           if (request.audio === 'mic') {
             const audio = await navigator.mediaDevices.getUserMedia({
               audio: true
@@ -99,14 +99,26 @@ chrome.runtime.onMessage.addListener(async request => {
           }
           tracks = stream.getTracks();
 
+          if (request.play && type.includes('tab') && type.includes('audio')) {
+            try {
+              const context = new AudioContext();
+              const source = context.createMediaStreamSource(stream);
+              source.connect(context.destination);
+            }
+            catch (e) {}
+          }
+
           const file = new File();
           await file.open();
           const mediaRecorder = new MediaRecorder(stream, {
             mime: 'video/webm'
           });
+
           const capture = () => {
-            mediaRecorder.requestData();
-            capture.id = setTimeout(capture, 5000);
+            if (mediaRecorder.state === 'recording') {
+              mediaRecorder.requestData();
+              capture.id = setTimeout(capture, 10000);
+            }
           };
           capture.offset = 0;
           capture.progress = 0;
@@ -115,7 +127,7 @@ chrome.runtime.onMessage.addListener(async request => {
           mediaRecorder.addEventListener('dataavailable', e => {
             const download = () => {
               if (capture.progress === 0 && mediaRecorder.state === 'inactive') {
-                window.clearTimeout(button.id);
+                clearTimeout(button.id);
 
                 file.download('capture.webm', 'video/webm').then(() => file.remove()).catch(e => {
                   console.warn(e);
@@ -125,27 +137,25 @@ chrome.runtime.onMessage.addListener(async request => {
             };
             if (e.data.size) {
               capture.progress += 1;
-              const reader = new FileReader();
-              reader.onload = e => {
+              e.data.arrayBuffer().then(ab => {
                 file.chunks({
                   offset: capture.offset,
-                  buffer: new Uint8Array(e.target.result)
+                  buffer: new Uint8Array(ab)
                 }).then(() => {
                   capture.progress -= 1;
                   download();
                 });
-              };
-              reader.readAsArrayBuffer(e.data);
+              });
               capture.offset += 1;
             }
             else {
               download();
             }
           });
-          stream.oninactive = stream.onremovetrack = stream.onended = () => {
-            clearTimeout(capture.id);
-            mediaRecorder.stop();
-          };
+          stream.oninactive = stream.onremovetrack = stream.onended = button.click;
+          for (const track of tracks) {
+            track.onended = button.click;
+          }
           mediaRecorder.start();
           button.recording();
           capture();
@@ -162,7 +172,26 @@ chrome.runtime.onMessage.addListener(async request => {
   else if (request.method === 'notify') {
     notify(request.message);
   }
-});
+  else if (request.method === 'draw-on-page') {
+    chrome.permissions.request({
+      permissions: ['activeTab']
+    }, granted => {
+      console.log(granted);
+      if (granted) {
+        chrome.tabs.executeScript({
+          file: 'data/inject.js',
+          runAt: 'document_start'
+        }, () => {
+          const lastError = chrome.runtime.lastError;
+          if (lastError) {
+            notify(lastError);
+          }
+        });
+      }
+    });
+  }
+};
+chrome.runtime.onMessage.addListener(onMessage);
 
 // save files from indexdb and remove the
 {
@@ -189,6 +218,21 @@ chrome.runtime.onMessage.addListener(async request => {
   chrome.runtime.onInstalled.addListener(restore);
 }
 
+// context menu
+{
+  const startup = () => {
+    chrome.contextMenus.create({
+      title: 'Draw on This Page',
+      id: 'draw-on-page',
+      contexts: ['browser_action']
+    });
+  };
+  chrome.runtime.onStartup.addListener(startup);
+  chrome.runtime.onInstalled.addListener(startup);
+}
+chrome.contextMenus.onClicked.addListener(() => onMessage({
+  method: 'draw-on-page'
+}));
 
 /* FAQs & Feedback */
 {

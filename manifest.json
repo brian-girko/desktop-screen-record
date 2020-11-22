@@ -1,13 +1,18 @@
 {
   "manifest_version": 2,
-  "version": "0.1.2",
-  "name": "Desktop Screen Record",
+  "version": "0.2.0",
+  "name": "iCapture - Screen Record and Draw",
   "description": "Record the computer's screen, entire application or a single browser tab with audio support",
   "permissions": [
     "desktopCapture",
     "storage",
     "notifications",
-    "downloads"
+    "downloads",
+    "unlimitedStorage",
+    "contextMenus"
+  ],
+  "optional_permissions": [
+    "activeTab"
   ],
   "homepage_url": "https://add0n.com/screen-record.html",
   "icons": {
@@ -38,5 +43,8 @@
       "file.js",
       "background.js"
     ]
-  }
+  },
+  "web_accessible_resources": [
+    "data/window/index.html"
+  ]
 }
