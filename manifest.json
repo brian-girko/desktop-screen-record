@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "name": "iCapture - Screen Record and Draw",
   "description": "Record the computer's screen, entire application or a single browser tab with audio support",
   "permissions": [
@@ -40,7 +40,7 @@
   "background": {
     "peristant": false,
     "scripts": [
-      "file.js",
+      "downloads/file.js",
       "background.js"
     ]
   },

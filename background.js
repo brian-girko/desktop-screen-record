@@ -133,8 +133,14 @@ const onMessage = (request, sender, response) => {
               const download = () => {
                 if (capture.progress === 0 && mediaRecorder.state === 'inactive') {
                   clearTimeout(button.id);
+                  console.log(capture.offset);
 
-                  file.download('capture.webm', 'video/webm').then(() => file.remove()).catch(e => {
+                  file.download({
+                    filename: 'capture.webm',
+                    mime: 'video/webm',
+                    dialog: capture.offset > 100,
+                    offsets: []
+                  }).then(() => file.remove()).catch(e => {
                     console.warn(e);
                     notify('An error occurred during saving: ' + e.message);
                   });
@@ -173,7 +179,6 @@ const onMessage = (request, sender, response) => {
       catch (e) {
         notify(e.message || 'Capturing Failed with an unknown error');
       }
-
     })();
   }
   else if (request.method === 'notify') {
@@ -224,7 +229,12 @@ chrome.runtime.onMessage.addListener(onMessage);
       const file = new File(o.name);
       await file.open();
       try {
-        await file.download('capture.webm', 'video/webm');
+        await file.download({
+          filename: 'capture.webm',
+          mime: 'video/webm',
+          dialog: false,
+          offsets: []
+        });
       }
       catch (e) {
         console.warn(e);
