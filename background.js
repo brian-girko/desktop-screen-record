@@ -47,127 +47,130 @@ const button = {
 };
 chrome.browserAction.onClicked.addListener(button.click);
 
-const onMessage = async request => {
+const onMessage = (request, sender, response) => {
   if (request.method === 'record') {
-    try {
-      if (request.audio === 'mic') {
-        const state = (await navigator.permissions.query({name: 'microphone'})).state;
-        if (state !== 'granted') {
-          return chrome.windows.create({
-            url: chrome.extension.getURL('data/permission/index.html?' + `video=${request.video}&audio=${request.audio}`),
-            width: 400,
-            height: 400,
-            left: screen.availLeft + Math.round((screen.availWidth - 400) / 2),
-            top: screen.availTop + Math.round((screen.availHeight - 400) / 2),
-            type: 'popup'
-          });
-        }
-      }
-
-      const type = [request.video];
-      if (request.audio === 'system') {
-        type.push('audio');
-      }
-
-      chrome.desktopCapture.chooseDesktopMedia(type, async streamId => {
-        try {
-          const constraints = {
-            video: {
-              mandatory: {
-                chromeMediaSource: 'desktop',
-                chromeMediaSourceId: streamId
-              }
-            }
-          };
-          if (request.audio === 'system') {
-            constraints.audio = {
-              mandatory: {
-                chromeMediaSource: 'system',
-                chromeMediaSourceId: streamId
-              }
-            };
-          }
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-          if (request.audio === 'mic') {
-            const audio = await navigator.mediaDevices.getUserMedia({
-              audio: true
+    (async () => {
+      try {
+        if (request.audio === 'mic') {
+          const state = (await navigator.permissions.query({name: 'microphone'})).state;
+          if (state !== 'granted') {
+            return chrome.windows.create({
+              url: chrome.extension.getURL('data/permission/index.html?' + `video=${request.video}&audio=${request.audio}`),
+              width: 400,
+              height: 400,
+              left: screen.availLeft + Math.round((screen.availWidth - 400) / 2),
+              top: screen.availTop + Math.round((screen.availHeight - 400) / 2),
+              type: 'popup'
             });
-            for (const track of audio.getAudioTracks()) {
-              stream.addTrack(track);
-            }
           }
-          tracks = stream.getTracks();
+        }
 
-          if (request.play && type.includes('tab') && type.includes('audio')) {
-            try {
-              const context = new AudioContext();
-              const source = context.createMediaStreamSource(stream);
-              source.connect(context.destination);
-            }
-            catch (e) {}
-          }
+        const type = [request.video];
+        if (request.audio === 'system') {
+          type.push('audio');
+        }
 
-          const file = new File();
-          await file.open();
-          const mediaRecorder = new MediaRecorder(stream, {
-            mime: 'video/webm'
-          });
-
-          const capture = () => {
-            if (mediaRecorder.state === 'recording') {
-              mediaRecorder.requestData();
-              capture.id = setTimeout(capture, 10000);
-            }
-          };
-          capture.offset = 0;
-          capture.progress = 0;
-
-          mediaRecorder.addEventListener('error', e => notify(e.message));
-          mediaRecorder.addEventListener('dataavailable', e => {
-            const download = () => {
-              if (capture.progress === 0 && mediaRecorder.state === 'inactive') {
-                clearTimeout(button.id);
-
-                file.download('capture.webm', 'video/webm').then(() => file.remove()).catch(e => {
-                  console.warn(e);
-                  notify('An error occurred during saving: ' + e.message);
-                });
+        chrome.desktopCapture.chooseDesktopMedia(type, async streamId => {
+          try {
+            const constraints = {
+              video: {
+                mandatory: {
+                  chromeMediaSource: 'desktop',
+                  chromeMediaSourceId: streamId
+                }
               }
             };
-            if (e.data.size) {
-              capture.progress += 1;
-              e.data.arrayBuffer().then(ab => {
-                file.chunks({
-                  offset: capture.offset,
-                  buffer: new Uint8Array(ab)
-                }).then(() => {
-                  capture.progress -= 1;
-                  download();
-                });
+            if (request.audio === 'system') {
+              constraints.audio = {
+                mandatory: {
+                  chromeMediaSource: 'system',
+                  chromeMediaSourceId: streamId
+                }
+              };
+            }
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+            if (request.audio === 'mic') {
+              const audio = await navigator.mediaDevices.getUserMedia({
+                audio: true
               });
-              capture.offset += 1;
+              for (const track of audio.getAudioTracks()) {
+                stream.addTrack(track);
+              }
             }
-            else {
-              download();
+            tracks = stream.getTracks();
+
+            if (request.play && type.includes('tab') && type.includes('audio')) {
+              try {
+                const context = new AudioContext();
+                const source = context.createMediaStreamSource(stream);
+                source.connect(context.destination);
+              }
+              catch (e) {}
             }
-          });
-          stream.oninactive = stream.onremovetrack = stream.onended = button.click;
-          for (const track of tracks) {
-            track.onended = button.click;
+
+            const file = new File();
+            await file.open();
+            const mediaRecorder = new MediaRecorder(stream, {
+              mime: 'video/webm'
+            });
+
+            const capture = () => {
+              if (mediaRecorder.state === 'recording') {
+                mediaRecorder.requestData();
+                capture.id = setTimeout(capture, 10000);
+              }
+            };
+            capture.offset = 0;
+            capture.progress = 0;
+
+            mediaRecorder.addEventListener('error', e => notify(e.message));
+            mediaRecorder.addEventListener('dataavailable', e => {
+              const download = () => {
+                if (capture.progress === 0 && mediaRecorder.state === 'inactive') {
+                  clearTimeout(button.id);
+
+                  file.download('capture.webm', 'video/webm').then(() => file.remove()).catch(e => {
+                    console.warn(e);
+                    notify('An error occurred during saving: ' + e.message);
+                  });
+                }
+              };
+              if (e.data.size) {
+                capture.progress += 1;
+                e.data.arrayBuffer().then(ab => {
+                  file.chunks({
+                    offset: capture.offset,
+                    buffer: new Uint8Array(ab)
+                  }).then(() => {
+                    capture.progress -= 1;
+                    download();
+                  });
+                });
+                capture.offset += 1;
+              }
+              else {
+                download();
+              }
+            });
+            stream.oninactive = stream.onremovetrack = stream.onended = button.click;
+            for (const track of tracks) {
+              track.onended = button.click;
+            }
+            mediaRecorder.start();
+            button.recording();
+            capture();
           }
-          mediaRecorder.start();
-          button.recording();
-          capture();
-        }
-        catch (e) {
-          notify(e.message || 'Capturing Failed with an unknown error');
-        }
-      });
-    }
-    catch (e) {
-      notify(e.message || 'Capturing Failed with an unknown error');
-    }
+          catch (e) {
+            notify(e.message || 'Capturing Failed with an unknown error');
+          }
+        });
+      }
+      catch (e) {
+        notify(e.message || 'Capturing Failed with an unknown error');
+      }
+
+    })();
   }
   else if (request.method === 'notify') {
     notify(request.message);
@@ -176,7 +179,6 @@ const onMessage = async request => {
     chrome.permissions.request({
       permissions: ['activeTab']
     }, granted => {
-      console.log(granted);
       if (granted) {
         chrome.tabs.executeScript({
           file: 'data/inject.js',
@@ -189,6 +191,19 @@ const onMessage = async request => {
         });
       }
     });
+  }
+  else if (request.method === 'download') {
+    chrome.tabs.captureVisibleTab({
+      format: 'png',
+      quality: 1
+    }, href => {
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = sender.tab.title + '.png';
+      a.click();
+      response();
+    });
+    return true;
   }
 };
 chrome.runtime.onMessage.addListener(onMessage);
@@ -248,10 +263,11 @@ chrome.contextMenus.onClicked.addListener(() => onMessage({
         if (reason === 'install' || (prefs.faqs && reason === 'update')) {
           const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 45;
           if (doUpdate && previousVersion !== version) {
-            tabs.create({
+            tabs.query({active: true, currentWindow: true}, tbs => tabs.create({
               url: page + '?version=' + version + (previousVersion ? '&p=' + previousVersion : '') + '&type=' + reason,
-              active: reason === 'install'
-            });
+              active: reason === 'install',
+              ...(tbs && tbs.length && {index: tbs[0].index + 1})
+            }));
             storage.local.set({'last-update': Date.now()});
           }
         }
