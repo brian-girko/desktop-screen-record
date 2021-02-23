@@ -83,7 +83,7 @@ const onMessage = (request, sender, response) => {
             if (request.audio === 'system') {
               constraints.audio = {
                 mandatory: {
-                  chromeMediaSource: 'system',
+                  chromeMediaSource: 'desktop',
                   chromeMediaSourceId: streamId
                 }
               };
@@ -100,14 +100,18 @@ const onMessage = (request, sender, response) => {
             }
             tracks = stream.getTracks();
 
-            if (request.play && type.includes('tab') && type.includes('audio')) {
-              try {
-                const context = new AudioContext();
-                const source = context.createMediaStreamSource(stream);
-                source.connect(context.destination);
-              }
-              catch (e) {}
-            }
+            // if (request.play && type.includes('audio')) {
+            //   console.log('try');
+            //   try {
+            //     const context = new AudioContext();
+            //     const source = context.createMediaStreamSource(stream);
+            //     console.log(context.destination, source);
+            //     source.connect(context.destination);
+            //   }
+            //   catch (e) {
+            //     console.log(e);
+            //   }
+            // }
 
             const file = new File();
             await file.open();
