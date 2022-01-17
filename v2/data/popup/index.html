@@ -6,7 +6,12 @@
 <body>
   <table>
     <tr>
-      <th colspan="2">Video Source</th>
+      <th colspan="2">Video Source <select id="quality" title="Select video quality" name="quality">
+        <option value="default">Default</option>
+        <option value="hd">HD</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select></th>
     </tr>
     <tr>
       <td><input type="radio" name="video" id="screen" checked="true"></td>
@@ -30,6 +35,10 @@
     <tr>
       <td><input type="radio" name="audio" id="mic"></td>
       <td><label for="mic">Microphone</label></td>
+    </tr>
+    <tr>
+      <td><input type="radio" name="audio" id="mixed"></td>
+      <td><label for="mixed">Microphone &amp; Speaker</label></td>
     </tr>
     <tr>
       <td><input type="radio" name="audio" id="silent" checked="true"></td>

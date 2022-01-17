@@ -7,11 +7,12 @@ const notify = e => chrome.notifications.create({
   message: e.message || e
 });
 
-let tracks;
+let tracks = [];
 
 const button = {
   click() {
     tracks.forEach(track => track.stop());
+    clearTimeout(button.id);
     chrome.browserAction.setPopup({
       popup: 'data/popup/index.html'
     });
@@ -51,7 +52,7 @@ const onMessage = (request, sender, response) => {
   if (request.method === 'record') {
     (async () => {
       try {
-        if (request.audio === 'mic') {
+        if (request.audio === 'mic' || request.audio === 'mixed') {
           const state = (await navigator.permissions.query({name: 'microphone'})).state;
           if (state !== 'granted') {
             return chrome.windows.create({
@@ -66,12 +67,13 @@ const onMessage = (request, sender, response) => {
         }
 
         const type = [request.video];
-        if (request.audio === 'system') {
+        if (request.audio === 'system' || request.audio === 'mixed') {
           type.push('audio');
         }
 
         chrome.desktopCapture.chooseDesktopMedia(type, async streamId => {
           try {
+            tracks = [];
             const constraints = {
               video: {
                 mandatory: {
@@ -80,7 +82,7 @@ const onMessage = (request, sender, response) => {
                 }
               }
             };
-            if (request.audio === 'system') {
+            if (request.audio === 'system' || request.audio === 'mixed') {
               constraints.audio = {
                 mandatory: {
                   chromeMediaSource: 'desktop',
@@ -88,30 +90,48 @@ const onMessage = (request, sender, response) => {
                 }
               };
             }
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            if (request.quality === 'high') {
+              constraints.video.mandatory.maxWidth = screen.width * 2;
+              constraints.video.mandatory.maxHeight = screen.height * 2;
+            }
+            else if (request.quality === 'medium') {
+              constraints.video.mandatory.maxWidth = screen.width * 0.5;
+              constraints.video.mandatory.maxHeight = screen.height * 0.5;
+            }
+            else if (request.quality === 'low') {
+              constraints.video.mandatory.maxWidth = screen.width * 0.25;
+              constraints.video.mandatory.maxHeight = screen.height * 0.25;
+            }
 
-            if (request.audio === 'mic') {
+            let stream = await navigator.mediaDevices.getUserMedia(constraints);
+            if (request.audio === 'mic' || request.audio === 'mixed') {
               const audio = await navigator.mediaDevices.getUserMedia({
                 audio: true
               });
-              for (const track of audio.getAudioTracks()) {
-                stream.addTrack(track);
+              if (stream.getAudioTracks().length === 0) {
+                for (const track of audio.getAudioTracks()) {
+                  stream.addTrack(track);
+                }
+              }
+              else {
+                try {
+                  const context = new AudioContext();
+                  const destination = context.createMediaStreamDestination();
+                  context.createMediaStreamSource(audio).connect(destination);
+                  context.createMediaStreamSource(stream).connect(destination);
+                  const ns = new MediaStream();
+                  stream.getVideoTracks().forEach(track => ns.addTrack(track));
+                  destination.stream.getAudioTracks().forEach(track => ns.addTrack(track));
+                  tracks.push(...stream.getTracks());
+                  stream = ns;
+                }
+                catch (e) {
+                  console.log(e);
+                  notify(e);
+                }
               }
             }
-            tracks = stream.getTracks();
-
-            // if (request.play && type.includes('audio')) {
-            //   console.log('try');
-            //   try {
-            //     const context = new AudioContext();
-            //     const source = context.createMediaStreamSource(stream);
-            //     console.log(context.destination, source);
-            //     source.connect(context.destination);
-            //   }
-            //   catch (e) {
-            //     console.log(e);
-            //   }
-            // }
+            tracks.push(...stream.getTracks());
 
             const file = new File();
             await file.open();
@@ -126,6 +146,7 @@ const onMessage = (request, sender, response) => {
               }
             };
             capture.offset = 0;
+            capture.size = 0;
             capture.progress = 0;
 
             mediaRecorder.addEventListener('error', e => notify(e.message));
@@ -133,13 +154,13 @@ const onMessage = (request, sender, response) => {
               const download = () => {
                 if (capture.progress === 0 && mediaRecorder.state === 'inactive') {
                   clearTimeout(button.id);
-                  console.log(capture.offset);
 
                   file.download({
                     filename: 'capture.webm',
                     mime: 'video/webm',
-                    dialog: capture.offset > 100,
-                    offsets: []
+                    dialog: capture.size > 500 * 1024 * 1024,
+                    offsets: [],
+                    size: capture.size
                   }).then(() => file.remove()).catch(e => {
                     console.warn(e);
                     notify('An error occurred during saving: ' + e.message);
@@ -148,6 +169,7 @@ const onMessage = (request, sender, response) => {
               };
               if (e.data.size) {
                 capture.progress += 1;
+                capture.size += e.data.size;
                 e.data.arrayBuffer().then(ab => {
                   file.chunks({
                     offset: capture.offset,
@@ -172,6 +194,7 @@ const onMessage = (request, sender, response) => {
             capture();
           }
           catch (e) {
+            console.log(e);
             notify(e.message || 'Capturing Failed with an unknown error');
           }
         });

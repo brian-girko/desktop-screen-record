@@ -1,0 +1,113 @@
+body {
+  font-size: 13px;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  margin: 0;
+  display: grid;
+  grid-template-rows: repeat(5, min-content) 1fr;
+  height: 100vh;
+}
+
+h2 {
+  font-weight: normal;
+  background-color: #f0f0f0;
+  padding: 10px;
+  font-size: 100%;
+  margin: 0;
+}
+.two {
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  grid-gap: 5px;
+  align-items: center;
+  padding: 10px;
+}
+
+#draw,
+#record {
+  background-color: #f0f0f0;
+  height: 42px;
+  line-height: 42px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+#draw {
+  position: relative;
+}
+#draw:hover,
+#record:hover {
+  background-color: rgba(0, 117, 255, 0.43);
+}
+#draw::after {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  background-color: #c5c5c5;
+  height: 18px;
+  position: absolute;
+  right: -1px;
+  top: 12px;
+}
+#draw:hover::after {
+  display: none;
+}
+#tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+}
+#quality {
+  outline: none;
+  border: none;
+  padding: 2px 5px;
+}
+#controls {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body[data-mode="ready"] #controls,
+body[data-mode="error"] #controls {
+  display: none;
+}
+#controls > div {
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+#controls input {
+  width: 64px;
+  height: 64px;
+  background-size: 64px;
+  border: none;
+  cursor: pointer;
+}
+#controls input:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+#controls input:active {
+  background-color: #6ed7ff;
+}
+#pause {
+  background: url('icons/pause.png') center center no-repeat;
+}
+#resume {
+  background: url('icons/resume.png') center center no-repeat;
+}
+#stop {
+  background: url('icons/stop.png') center center no-repeat;
+}
+body[data-mode="recording"] #resume {
+  display: none;
+}
+body[data-mode="paused"] #pause {
+  display: none;
+}

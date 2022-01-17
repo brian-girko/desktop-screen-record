@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="index.css">
+  <title>Screen Recorder</title>
+</head>
+<body data-mode="ready">
+  <h2>Video Source <select id="quality" title="Select video quality" name="quality">
+    <option value="default">Default</option>
+    <option value="hd">HD</option>
+    <option value="medium">Medium</option>
+    <option value="low">Low</option>
+  </select></h2>
+  <div class="two">
+    <input type="radio" name="video" id="screen" checked="true">
+    <label for="screen">Entire Screen</label>
+    <input type="radio" name="video" id="window">
+    <label for="window">Application Window</label>
+    <input type="radio" name="video" id="tab">
+    <label for="tab">Browser Tab</label>
+  </div>
+  <h2>Audio Source</h2>
+  <div class="two">
+    <input type="radio" name="audio" id="system">
+    <label for="system">System (Speaker)</label>
+    <input type="radio" name="audio" id="mic">
+    <label for="mic">Microphone</label>
+    <input type="radio" name="audio" id="mixed">
+    <label for="mixed">Microphone &amp; Speaker</label>
+    <input type="radio" name="audio" id="silent" checked="true">
+    <label for="silent">No Audio</label>
+  </div>
+  <div class="two" title="When recording a tab, audio is muted. Use this option to unmute (this might cause audio recording problems)">
+    <input type="checkbox" id="play" name="play">
+    <label for="play">Try to Stream Audio</label>
+    <input type="checkbox" id="minimize" name="minimize">
+    <label for="minimize">Minimize this window before recording starts</label>
+  </div>
+  <div id="tools">
+    <span id="draw">Draw</span>
+    <span id="record">Record</span>
+  </div>
+  <div id="controls">
+    <div>
+      <input type="button" id="pause" title="Pause recording">
+      <input type="button" id="resume" title="Resume recording">
+      <input type="button" id="stop" title="Stop recording and save to local disk">
+    </div>
+  </div>
+
+  <script type="text/javascript" src="record.js"></script>
+  <script type="text/javascript" src="EBML.js"></script>
+  <script type="text/javascript" src="index.js"></script>
+</body>
+</html>
