@@ -1,13 +1,12 @@
 {
   "manifest_version": 3,
-  "version": "0.3.0",
-  "name": "iCapture - Screen Record and Draw",
+  "version": "0.3.1",
+  "name": "Desktop Screen Recorder",
   "description": "Record the computer's screen, entire application or a single browser tab with audio support",
   "permissions": [
     "desktopCapture",
     "storage",
     "notifications",
-    "downloads",
     "unlimitedStorage",
     "contextMenus"
   ],
@@ -15,8 +14,7 @@
     "activeTab",
     "scripting"
   ],
-  "minimum_chrome_version": "95",
-  "homepage_url": "https://add0n.com/screen-record.html",
+  "homepage_url": "https://webextension.org/listing/screen-record.html",
   "icons": {
     "16": "data/icons/16.png",
     "32": "data/icons/32.png",
@@ -35,9 +33,7 @@
     "matches": ["*://*/*"]
   }],
   "commands": {
-    "_execute_action": {
-      "description": "Press the action button"
-    },
+    "_execute_action": {},
     "pause-recording": {
       "description": "Pause recording with a keyboard shortcut"
     },

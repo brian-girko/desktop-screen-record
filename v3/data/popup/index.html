@@ -30,9 +30,15 @@
     <input type="radio" name="audio" id="silent" checked="true">
     <label for="silent">No Audio</label>
   </div>
-  <div class="two" title="When recording a tab, audio is muted. Use this option to unmute (this might cause audio recording problems)">
-    <input type="checkbox" id="play" name="play">
-    <label for="play">Try to Stream Audio</label>
+  <div class="two">
+    <div class="cnn" title="Create media that can be navigated to different points in the content (requires stream manipulation)">
+      <input type="checkbox" id="seekable" name="seekable">
+      <label for="seekable">Generate seekable media</label>
+    </div>
+    <div class="cnn" title="When recording a tab, audio is muted. Use this option to unmute (this might cause audio recording problems)">
+      <input type="checkbox" id="play" name="play">
+      <label for="play">Try to Stream Audio</label>
+    </div>
     <input type="checkbox" id="minimize" name="minimize">
     <label for="minimize">Minimize this window before recording starts</label>
   </div>
@@ -48,8 +54,8 @@
     </div>
   </div>
 
-  <script type="text/javascript" src="record.js"></script>
   <script type="text/javascript" src="EBML.js"></script>
+  <script type="text/javascript" src="record.js"></script>
   <script type="text/javascript" src="index.js"></script>
 </body>
 </html>

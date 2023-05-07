@@ -111,3 +111,7 @@ body[data-mode="recording"] #resume {
 body[data-mode="paused"] #pause {
   display: none;
 }
+
+.cnn {
+  display: contents;
+}

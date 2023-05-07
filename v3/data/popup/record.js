@@ -1,6 +1,14 @@
 /* global notify, EBML */
 let tracks = [];
 
+// https://github.com/node-ebml/node-ebml/issues/119
+EBML.tools.makeMetadataSeekable = new Proxy(EBML.tools.makeMetadataSeekable, {
+  apply(target, self, args) {
+    args[0] = args[0].filter(o => o.type !== 'unknown');
+    return Reflect.apply(target, self, args);
+  }
+});
+
 const button = {
   stop() {
     tracks.forEach(track => track.stop());
@@ -10,7 +18,7 @@ const button = {
     chrome.runtime.sendMessage({
       method: 'normal'
     });
-    window.setTimeout(() => chrome.action.setIcon({
+    setTimeout(() => chrome.action.setIcon({
       path: {
         '16': '/data/icons/16.png',
         '32': '/data/icons/32.png',
@@ -25,7 +33,7 @@ const button = {
     chrome.runtime.sendMessage({
       method: 'normal'
     });
-    window.setTimeout(() => chrome.action.setIcon({
+    setTimeout(() => chrome.action.setIcon({
       path: {
         '16': '/data/icons/16.png',
         '32': '/data/icons/32.png',
@@ -172,17 +180,24 @@ Either use different audio source or allow the microphone access`);
     write.busy = false;
     if (meta.recording === false) {
       // Update header to have the correct duration
-      const header = EBML.tools.makeMetadataSeekable(reader.metadatas, duration(), reader.cues);
-      await writable.write({
-        type: 'write',
-        data: new Uint8Array(header),
-        position: 0
-      });
+      if (request.seekable) {
+        try {
+          const header = EBML.tools.makeMetadataSeekable(reader.metadatas, duration(), reader.cues);
+          await writable.write({
+            type: 'write',
+            data: new Uint8Array(header),
+            position: 0
+          });
+        }
+        catch (e) {
+          console.error(e);
+        }
+      }
       await writable.close();
       button.stop();
     }
   };
-  write.busy = true;
+  write.busy = request.seekable ? true : false;
 
   // meta
   const meta = {
@@ -221,16 +236,22 @@ Either use different audio source or allow the microphone access`);
     prepare.busy = true;
 
     // writing dummy meta
-    const chunks = meta.chunks;
-    meta.chunks = [];
+    if (request.seekable) {
+      try {
+        const header = EBML.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
+        const ab = await (new Blob(meta.chunks)).arrayBuffer();
 
-    const header = EBML.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
-    const ab = await (new Blob(chunks)).arrayBuffer();
+        meta.chunks.length = 0;
 
-    // prepending data without the original header
-    meta.chunks.unshift(ab.slice(reader.metadataSize));
-    // prepending the dummy meta
-    meta.chunks.unshift(header);
+        // prepending data without the original header
+        meta.chunks.unshift(ab.slice(reader.metadataSize));
+        // prepending the dummy meta
+        meta.chunks.unshift(header);
+      }
+      catch (e) {
+        console.error(e);
+      }
+    }
 
     write.busy = false;
   };
@@ -240,12 +261,14 @@ Either use different audio source or allow the microphone access`);
     const ab = await e.data.arrayBuffer();
     meta.chunks.push(ab);
 
-    // meta is ready; lets start to write to disk
-    if (reader.cues.length) {
-      prepare();
-    }
-    else {
-      decoder.decode(ab).forEach(element => reader.read(element));
+    if (request.seekable) {
+      // meta is ready; lets start to write to disk
+      if (reader.cues.length) {
+        prepare();
+      }
+      else {
+        decoder.decode(ab).forEach(element => reader.read(element));
+      }
     }
 
     write();
@@ -253,7 +276,7 @@ Either use different audio source or allow the microphone access`);
     document.title = 'Recording for ' + ms2st(duration());
   };
 
-  mediaRecorder.onstop = mediaRecorder.onerror = async () => {
+  mediaRecorder.onstop = mediaRecorder.onerror = () => {
     meta.stats[meta.stats.length - 1].end = Date.now();
     meta.recording = false;
   };

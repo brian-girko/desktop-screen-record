@@ -1,4 +1,3 @@
-/* global button */
 'use strict';
 
 const args = new URLSearchParams(location.search);
@@ -14,7 +13,8 @@ document.getElementById('record').addEventListener('click', () => self.record({
   quality: document.getElementById('quality').value,
   video: document.querySelector('[name=video]:checked').id,
   audio: document.querySelector('[name=audio]:checked').id,
-  play: document.getElementById('play').checked
+  play: document.getElementById('play').checked,
+  seekable: document.getElementById('seekable').checked
 }).catch(e => {
   console.warn(e);
   alert(e.message || e);
@@ -24,11 +24,13 @@ chrome.storage.local.get({
   audio: 'silent',
   video: 'screen',
   quality: 'default',
-  play: false
+  play: false,
+  seekable: false
 }, prefs => {
   document.getElementById(prefs.video).checked = true;
   document.getElementById(prefs.audio).checked = true;
   document.getElementById('play').checked = prefs.play;
+  document.getElementById('seekable').checked = prefs.seekable;
   document.getElementById('quality').value = prefs.quality;
 });
 

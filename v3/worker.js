@@ -73,7 +73,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'draw-on-page') {
     chrome.permissions.request({
       permissions: ['activeTab', 'scripting']
-    }, async granted => {
+    }, granted => {
       if (granted) {
         chrome.scripting.executeScript({
           target: {
