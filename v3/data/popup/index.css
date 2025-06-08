@@ -115,3 +115,9 @@ body[data-mode="paused"] #pause {
 .cnn {
   display: contents;
 }
+
+.disabled, .disabled * {
+  opacity: 0.5;
+  text-decoration: line-through;
+  pointer-events: none;
+}

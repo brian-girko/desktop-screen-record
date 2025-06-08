@@ -243,6 +243,8 @@ Either use different audio source or allow the microphone access`);
 
         meta.chunks.length = 0;
 
+        console.log(ab, reader);
+
         // prepending data without the original header
         meta.chunks.unshift(ab.slice(reader.metadataSize));
         // prepending the dummy meta

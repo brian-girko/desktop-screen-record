@@ -3,6 +3,8 @@ const notify = e => chrome.notifications.create({
   iconUrl: '/data/icons/48.png',
   title: chrome.runtime.getManifest().name,
   message: e.message || e
+}, id => {
+  setTimeout(chrome.notifications.clear, 3000, id);
 });
 
 chrome.action.onClicked.addListener(tab => {
@@ -65,6 +67,11 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
       id: 'draw-on-page',
       contexts: ['action']
     });
+    chrome.contextMenus.create({
+      title: 'Draw on New Page',
+      id: 'draw-on-new',
+      contexts: ['action']
+    });
   };
   chrome.runtime.onStartup.addListener(startup);
   chrome.runtime.onInstalled.addListener(startup);
@@ -82,6 +89,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
           files: ['data/inject.js']
         }).catch(notify);
       }
+    });
+  }
+  else if (info.menuItemId === 'draw-on-new') {
+    chrome.tabs.create({
+      url: '/data/window/index.html?print-background-color=transparent&runtime-resize=true&runtime-remote-download=true&runtime-report-close=true'
     });
   }
 });

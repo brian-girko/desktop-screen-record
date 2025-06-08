@@ -14,7 +14,8 @@ document.getElementById('record').addEventListener('click', () => self.record({
   video: document.querySelector('[name=video]:checked').id,
   audio: document.querySelector('[name=audio]:checked').id,
   play: document.getElementById('play').checked,
-  seekable: document.getElementById('seekable').checked
+  // seekable: document.getElementById('seekable').checked
+  seekable: false
 }).catch(e => {
   console.warn(e);
   alert(e.message || e);

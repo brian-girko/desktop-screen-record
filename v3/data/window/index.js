@@ -11,9 +11,14 @@ document.querySelector('toolbar-view').addEventListener('object', e => {
         return;
       }
     }
-    parent.postMessage({
-      method: 'close'
-    }, '*');
+    if (window.top === window) {
+      window.close();
+    }
+    else {
+      parent.postMessage({
+        method: 'close'
+      }, '*');
+    }
   }
   else if (object === 'close') {
     window.close();
